@@ -1,0 +1,18 @@
+[project]
+name = "template"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.3",
+    "black>=24.0.0",
+    "pre-commit>=3.6.0",
+    "playwright>=1.55.0",
+]
