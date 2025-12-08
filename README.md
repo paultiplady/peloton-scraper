@@ -5,6 +5,7 @@ Minimal Peloton command-line interface layered over pluggable API client adapter
 ## Features
 - Fetch your Peloton profile or workout data and emit deterministic, sorted JSON.
 - Credentials loaded from environment variables or `.env`/`.envfile` files (with optional overrides).
+- [Typer](https://typer.tiangolo.com/) powers the CLI experience with rich help text and validation.
 - Client registry allows multiple Peloton API implementations; shipped with the Geudrik adapter.
 - Packaged with Hatch via `pyproject.toml`, managed with [uv](https://github.com/astral-sh/uv) for development workflows.
 

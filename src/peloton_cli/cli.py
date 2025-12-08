@@ -1,93 +1,100 @@
 from __future__ import annotations
 
-import argparse
 import json
-import sys
+from pathlib import Path
 from typing import Any
 
+import typer
+
 from .clients import available_clients, get_client
+from .clients.base import PelotonAPIClient
 from .config import Credentials, MissingCredentialsError, load_environment
 
+app = typer.Typer(
+    add_completion=False,
+    help="Minimal Peloton CLI with pluggable API backends.",
+)
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="peloton-cli",
-        description="Minimal Peloton CLI with pluggable API backends.",
-    )
-    parser.add_argument(
+
+def _client_completions(_: str, incomplete: str) -> list[str]:
+    return [name for name in available_clients() if name.startswith(incomplete)]
+
+
+@app.callback()
+def initialize(
+    ctx: typer.Context,
+    client: str = typer.Option(
+        "geudrik",
         "--client",
-        default="geudrik",
-        choices=list(available_clients()),
-        help="Peloton API client implementation to use.",
-    )
-    parser.add_argument(
+        "-c",
+        help="Peloton API client implementation.",
+        show_default=True,
+        autocompletion=_client_completions,
+    ),
+    env_file: list[Path] = typer.Option(
+        None,
         "--env-file",
-        dest="env_files",
-        action="append",
-        default=[],
         help="Additional env files to load (in addition to .env/.envfile).",
-    )
+    ),
+) -> None:
+    """Load credentials and initialize the requested client."""
 
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    subparsers.add_parser("profile", help="Fetch the profile for the authenticated user.")
-
-    workouts_parser = subparsers.add_parser("workouts", help="List workouts for the authenticated user.")
-    workouts_parser.add_argument("--limit", type=int, default=10, help="Maximum number of workouts to request.")
-    workouts_parser.add_argument("--page", type=int, default=0, help="Page index to request from the API.")
-
-    workout_parser = subparsers.add_parser("workout", help="Fetch a single workout by workout_id.")
-    workout_parser.add_argument("workout_id", help="Peloton workout identifier.")
-
-    return parser
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
-
-    load_environment(additional_files=args.env_files)
+    ctx.ensure_object(dict)
+    env_files = [str(path) for path in env_file] if env_file else None
+    load_environment(additional_files=env_files)
 
     try:
         credentials = Credentials.from_env()
     except MissingCredentialsError as exc:
-        parser.error(str(exc))
+        typer.secho(str(exc), err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=1)
 
     try:
-        client = get_client(args.client, credentials)
-    except ValueError as exc:  # pragma: no cover - defensive
-        parser.error(str(exc))
-
-    try:
-        payload = execute_command(args, client)
-    except Exception as exc:  # pragma: no cover - CLI surface
-        print(f"Error: {exc}", file=sys.stderr)
-        return 1
-
-    emit_json(payload)
-    return 0
+        ctx.obj["client"] = get_client(client, credentials)
+    except ValueError as exc:
+        typer.secho(str(exc), err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=2)
 
 
-def execute_command(args: argparse.Namespace, client) -> Any:
-    if args.command == "profile":
-        return client.fetch_profile()
+@app.command()
+def profile(ctx: typer.Context) -> None:
+    """Fetch the profile for the authenticated user."""
 
-    if args.command == "workouts":
-        if args.limit < 1:
-            raise ValueError("--limit must be >= 1")
-        if args.page < 0:
-            raise ValueError("--page must be >= 0")
-        return client.fetch_workouts(limit=args.limit, page=args.page)
+    client: PelotonAPIClient = ctx.obj["client"]
+    emit_json(client.fetch_profile())
 
-    if args.command == "workout":
-        return client.fetch_workout(args.workout_id)
 
-    raise ValueError(f"Unknown command '{args.command}'")
+@app.command()
+def workouts(
+    ctx: typer.Context,
+    limit: int = typer.Option(10, "--limit", "-l", min=1, help="Maximum number of workouts."),
+    page: int = typer.Option(0, "--page", "-p", min=0, help="Page index to request."),
+) -> None:
+    """List workouts for the authenticated user."""
+
+    client: PelotonAPIClient = ctx.obj["client"]
+    emit_json(client.fetch_workouts(limit=limit, page=page))
+
+
+@app.command()
+def workout(ctx: typer.Context, workout_id: str = typer.Argument(..., help="Peloton workout identifier.")) -> None:
+    """Fetch a single workout by workout_id."""
+
+    if not workout_id:
+        typer.secho("workout_id must be provided", err=True, fg=typer.colors.RED)
+        raise typer.Exit(code=3)
+
+    client: PelotonAPIClient = ctx.obj["client"]
+    emit_json(client.fetch_workout(workout_id))
 
 
 def emit_json(payload: Any) -> None:
     print(json.dumps(payload, sort_keys=True, indent=2))
 
 
+def main() -> None:
+    app()
+
+
 if __name__ == "__main__":  # pragma: no cover
-    raise SystemExit(main())
+    main()
