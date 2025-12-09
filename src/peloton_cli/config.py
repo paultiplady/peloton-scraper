@@ -14,7 +14,9 @@ class MissingCredentialsError(RuntimeError):
     """Raised when the required Peloton credentials are not present."""
 
 
-def load_environment(additional_files: Sequence[str | os.PathLike[str]] | None = None) -> None:
+def load_environment(
+    additional_files: Sequence[str | os.PathLike[str]] | None = None,
+) -> None:
     """Load environment variables from .env-style files if they exist."""
 
     candidates: list[Path] = []

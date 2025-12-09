@@ -131,7 +131,9 @@ class RequestsClient(PelotonAPIClient):
         csrf_token, login_state = self._initiate_auth_flow(authorize_url, state)
 
         # Step 2: Submit credentials
-        next_url = self._submit_credentials(csrf_token, login_state, nonce, code_challenge)
+        next_url = self._submit_credentials(
+            csrf_token, login_state, nonce, code_challenge
+        )
 
         # Step 3: Follow redirects to get authorization code
         auth_code = self._follow_auth_redirects(next_url)
@@ -210,13 +212,17 @@ class RequestsClient(PelotonAPIClient):
 
         # Otherwise parse HTML form and submit it
         if response.status_code != 200:
-            raise RuntimeError(f"Login failed with status {response.status_code}: {response.text[:500]}")
+            raise RuntimeError(
+                f"Login failed with status {response.status_code}: {response.text[:500]}"
+            )
 
         parser = HiddenFormParser()
         parser.feed(response.text)
 
         if not parser.action:
-            raise RuntimeError(f"No form action found in login response: {response.text[:500]}")
+            raise RuntimeError(
+                f"No form action found in login response: {response.text[:500]}"
+            )
 
         return self._submit_hidden_form(parser.action, parser.fields)
 

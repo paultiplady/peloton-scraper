@@ -25,5 +25,7 @@ def get_client(name: str, credentials: Credentials) -> PelotonAPIClient:
     try:
         factory = _CLIENTS[name]
     except KeyError as exc:
-        raise ValueError(f"Unknown client '{name}'. Available: {', '.join(available_clients())}") from exc
+        raise ValueError(
+            f"Unknown client '{name}'. Available: {', '.join(available_clients())}"
+        ) from exc
     return factory(credentials)

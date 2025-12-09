@@ -67,7 +67,9 @@ def profile(ctx: typer.Context) -> None:
 @app.command()
 def workouts(
     ctx: typer.Context,
-    limit: int = typer.Option(10, "--limit", "-l", min=1, help="Maximum number of workouts."),
+    limit: int = typer.Option(
+        10, "--limit", "-l", min=1, help="Maximum number of workouts."
+    ),
     page: int = typer.Option(0, "--page", "-p", min=0, help="Page index to request."),
 ) -> None:
     """List workouts for the authenticated user."""
@@ -77,7 +79,10 @@ def workouts(
 
 
 @app.command()
-def workout(ctx: typer.Context, workout_id: str = typer.Argument(..., help="Peloton workout identifier.")) -> None:
+def workout(
+    ctx: typer.Context,
+    workout_id: str = typer.Argument(..., help="Peloton workout identifier."),
+) -> None:
     """Fetch a single workout by workout_id."""
 
     if not workout_id:

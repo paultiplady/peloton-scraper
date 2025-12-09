@@ -60,16 +60,24 @@ class PylotonCycleClient(PelotonAPIClient):
                     self._credentials.username,
                     self._credentials.password,
                 )
-            except PelotonLoginException as exc:  # pragma: no cover - runtime validation
+            except (
+                PelotonLoginException
+            ) as exc:  # pragma: no cover - runtime validation
                 raise RuntimeError(f"Peloton login failed: {exc}") from exc
         return self._client
 
     @staticmethod
-    def _get_json(client: PylotonCycle, url: str, params: dict[str, Any]) -> Mapping[str, Any]:
+    def _get_json(
+        client: PylotonCycle, url: str, params: dict[str, Any]
+    ) -> Mapping[str, Any]:
         response = client.s.get(url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
-        if isinstance(data, Mapping) and data.get("status") not in (None, 0) and data.get("status") >= 400:
+        if (
+            isinstance(data, Mapping)
+            and data.get("status") not in (None, 0)
+            and data.get("status") >= 400
+        ):
             message = data.get("message", "Peloton API error")
             raise RuntimeError(f"{message} (status {data.get('status')})")
         return data
