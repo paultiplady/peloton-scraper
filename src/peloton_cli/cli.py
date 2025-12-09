@@ -24,7 +24,7 @@ def _client_completions(_: str, incomplete: str) -> list[str]:
 def initialize(
     ctx: typer.Context,
     client: str = typer.Option(
-        "pylotoncycle",
+        "requests",
         "--client",
         "-c",
         help="Peloton API client implementation.",

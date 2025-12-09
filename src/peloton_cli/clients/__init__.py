@@ -6,12 +6,14 @@ from ..config import Credentials
 from .base import PelotonAPIClient
 from .geudrik import GeudrikPelotonClient
 from .pylotoncycle_client import PylotonCycleClient
+from .requests_client import RequestsClient
 
 ClientFactory = Callable[[Credentials], PelotonAPIClient]
 
 _CLIENTS: Mapping[str, ClientFactory] = {
     "geudrik": GeudrikPelotonClient,
     "pylotoncycle": PylotonCycleClient,
+    "requests": RequestsClient,
 }
 
 
