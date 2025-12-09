@@ -5,11 +5,13 @@ from typing import Callable, Iterable, Mapping
 from ..config import Credentials
 from .base import PelotonAPIClient
 from .geudrik import GeudrikPelotonClient
+from .pylotoncycle_client import PylotonCycleClient
 
 ClientFactory = Callable[[Credentials], PelotonAPIClient]
 
 _CLIENTS: Mapping[str, ClientFactory] = {
     "geudrik": GeudrikPelotonClient,
+    "pylotoncycle": PylotonCycleClient,
 }
 
 

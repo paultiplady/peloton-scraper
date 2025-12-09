@@ -6,7 +6,7 @@ Minimal Peloton command-line interface layered over pluggable API client adapter
 - Fetch your Peloton profile or workout data and emit deterministic, sorted JSON.
 - Credentials loaded from environment variables or `.env`/`.envfile` files (with optional overrides).
 - [Typer](https://typer.tiangolo.com/) powers the CLI experience with rich help text and validation.
-- Client registry allows multiple Peloton API implementations; shipped with the Geudrik adapter.
+- Client registry allows multiple Peloton API implementations; shipped with both [pylotoncycle](https://github.com/justmedude/pylotoncycle) (default) and the Geudrik adapter.
 - Packaged with Hatch via `pyproject.toml`, managed with [uv](https://github.com/astral-sh/uv) for development workflows.
 
 ## Requirements
@@ -30,13 +30,18 @@ Minimal Peloton command-line interface layered over pluggable API client adapter
    uv run peloton-cli workouts --limit 5
    uv run peloton-cli workout <workout_id>
    ```
+   Use the Geudrik adapter explicitly with `uv run peloton-cli --client geudrik profile`.
 
 All commands print JSON with stable key ordering so you can easily diff responses or feed them to other tooling.
 
 ## Client Architecture
 `peloton_cli.clients` holds an adapter registry. Each adapter implements `PelotonAPIClient` (see `clients/base.py`) so the CLI can be agnostic to the underlying HTTP library. Additions only need to register their factory in `clients/__init__.py` and implement the three methods (`fetch_profile`, `fetch_workouts`, `fetch_workout`).
 
-Switch clients at runtime with the `--client` flag once additional adapters are in place.
+Built-in adapters:
+- `pylotoncycle` (default) via [`justmedude/pylotoncycle`](https://github.com/justmedude/pylotoncycle)
+- `geudrik` via [`geudrik/peloton-client-library`](https://github.com/geudrik/peloton-client-library)
+
+Switch clients at runtime with the `--client` flag as new adapters land.
 
 ## Development
 - Format/lint: `uv run ruff check .` and `uv run black .`
